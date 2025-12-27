@@ -79,7 +79,7 @@ utoprim_1dvsq2fix1.c:
 
 /* these variables need to be shared between the functions
    Utoprim_1D, residual, and utsq */
-FTYPE Bsq,QdotBsq,Qtsq,Qdotn,D, K_atm ;
+extern FTYPE Bsq,QdotBsq,Qtsq,Qdotn,D, K_atm ;
 
 
 // Declarations: 

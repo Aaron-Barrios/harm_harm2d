@@ -43,7 +43,7 @@
 #***********************************************************************************/
 #### set USEICC to 0 if you want gcc compiler options, else set to 1 to use icc
 ########  gcc generally used for debugging with -g option so we can use gdb 
-USEICC = 1
+USEICC = 0
 
 
 ifeq ($(USEICC),1)
@@ -91,7 +91,7 @@ $(EXE): $(OBJS) $(INCS) makefile
 
 
 image_interp: image_interp.c
-	$(CC_LOAD) $(EXTRALIBS) image_interp.c -o image_interp
+	$(CC_LOAD) image_interp.c -o image_interp $(EXTRALIBS)
 
 clean:
 	/bin/rm -f *.o *.il
