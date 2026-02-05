@@ -71,6 +71,14 @@ void init()
 
 	/* for magnetic field */
 	double A[N1+1][N2+1] ;
+	double A_KS[NDIM][N1+1][N2+1] ;  // A^0, A^1, A^2, A^3 in BL coords
+	double g_phiphi = 0. ;
+	double g_tphi = 0. ;
+	double g_tt = 0. ;
+	double B0 = 1. ;
+	double rfac = 0. ;
+	double hfac = 0. ;
+
 	double rho_av,rhomax,umax,beta,bsq_ij,bsq_max,norm,q,beta_act ;
 	double rmax, lfish_calc(double rmax) ;
 
@@ -109,9 +117,9 @@ void init()
         /* output choices */
 	tf = 2000.0 ;
 
-	DTd = 50. ;	/* dumping frequency, in units of M */
+	DTd = 5. ;	/* dumping frequency, in units of M */
 	DTl = 2. ;	/* logfile frequency, in units of M */
-	DTi = 2. ; 	/* image file frequ., in units of M */
+	DTi = 20. ; 	/* image file frequ., in units of M */
 	DTr = 100 ; 	/* restart file frequ., in timesteps */
 
 	/* start diagnostic counters */
@@ -134,7 +142,7 @@ void init()
 		AA = (r*r + a*a)*(r*r + a*a) - DD*a*a*sth*sth ;
 		SS = r*r + a*a*cth*cth ;
 
-		thin = M_PI/2. ;
+		thin = M_PI/2. ; 
 		sthin = sin(thin) ;
 		cthin = cos(thin) ;
 		DDin = rin*rin - 2.*rin + a*a ;
@@ -236,27 +244,39 @@ void init()
 	bound_prim(p) ;
 
 	/* first find corner-centered vector potential */
-	ZSLOOP(0,N1,0,N2) A[i][j] = 0. ;
+	ZSLOOP(0,N1,0,N2) A_KS[0][i][j] = 0.;A_KS[1][i][j] = 0.;A_KS[2][i][j] = 0.;A_KS[3][i][j] = 0.;
         ZSLOOP(0,N1,0,N2) {
-                /* vertical field version */
-                /*
-                coord(i,j,CORN,X) ;
-                bl_coord(X,&r,&th) ;
+			/* vertical field version */
+			// coord(i,j,CORN,X) ;
+			// bl_coord(X,&r,&th) ;
+			// get_geometry(i,j,CENT,&geom) ;
+			// g_phiphi = geom.gcov[3][3] ;
+			// g_tphi = geom.gcov[0][3] ;
+			// g_tt = geom.gcov[0][0] ;
+			// rfac = r - R0 ;
+			// hfac = M_PI + (1. - hslope)*M_PI*cos(2.*M_PI*X[2]) ;
 
-                A[i][j] = 0.5*r*sin(th) ;
-                */
+			// //Look at pg. 25 in Introducing Aperture, Chen Luepker Yuan 2025
+			// //Calculating A_KS from the Wald solution (covariant components in KS)
+			// //Multiply at very end to get into modified KS' coordinates
+			// // A_KS[0][i][j] = 0. ;  // A^0
+			// A_KS[1][i][j] = B0*0.125*(a*a*a*(1-cos(4.*th)) - 4.*a*r*(r+2)*cos(2.*th)+4.*a*(r-6.)*r) / (a*a*cos(2.*th)+a*a+2.*r*r) * rfac ;  // A^r
+			// // A_KS[2][i][j] = 0. ;  // A^θ
+			// A_KS[3][i][j] = B0*0.5*sin(th)*sin(th)*(r*r + a*a - 2*a*a*r*(1+cos(th)*cos(th))/(r*r+a*a*cos(th)*cos(th))) * hfac ;  // A^φ
 
-                /* field-in-disk version */
-		/* flux_ct */
-                rho_av = 0.25*(
-                        p[i][j][RHO] +
-                        p[i-1][j][RHO] +
-                        p[i][j-1][RHO] +
-                        p[i-1][j-1][RHO]) ;
-
-                q = rho_av/rhomax - 0.2 ;
-                if(q > 0.) A[i][j] = q ;
-
+			/* field-in-disk version */
+				/* flux_ct */
+			
+			rho_av = 0.25*(
+				p[i][j][RHO] +
+				p[i-1][j][RHO] +
+				p[i][j-1][RHO] +
+				p[i-1][j-1][RHO]) ;
+				
+				q = rho_av/rhomax - 0.2 ;
+				if(q > 0.) A[i][j] = q ;
+			
+					
         }
 
 	/* now differentiate to find cell-centered B,
@@ -272,6 +292,18 @@ void init()
 				- A[i+1][j] - A[i+1][j+1])/(2.*dx[1]*geom.g) ;
 
 		p[i][j][B3] = 0. ;
+
+
+		// /*Vertical B-field*/
+		// // B1 = ∂A3/∂x2 - ∂A2/∂x3 = ∂A_φ/∂θ  (since A_θ = 0 and axisymmetric)
+		// p[i][j][B1] = (A_KS[3][i][j+1] - A_KS[3][i][j]) / (dx[2]*geom.g) ;
+
+		// // B2 = ∂A1/∂x3 - ∂A3/∂x1 = -∂A_φ/∂r  (since axisymmetric)
+		// p[i][j][B2] = -(A_KS[3][i+1][j] - A_KS[3][i][j]) / (dx[1]*geom.g) ;
+
+		// // B3 = ∂A2/∂x1 - ∂A1/∂x2 = -∂A_r/∂θ  (since A_θ = 0)
+		// p[i][j][B3] = -(A_KS[1][i][j+1] - A_KS[1][i][j]) / (dx[2]*geom.g) ;
+
 
 		bsq_ij = bsq_calc(p[i][j],&geom) ;
 		if(bsq_ij > bsq_max) bsq_max = bsq_ij ;

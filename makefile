@@ -54,7 +54,8 @@ endif
 
 ifeq ($(USEICC),0)
 CC       = gcc
-CCFLAGS  = -g
+# CCFLAGS  = -g
+CCFLAGS  = -O3 -ffast-math -funroll-loops -march=native
 endif
 
 
