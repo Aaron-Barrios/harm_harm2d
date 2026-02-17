@@ -51,16 +51,16 @@ differential equations (PDE).  Even though it was written with general relativis
 magnetohydrodynamics (GRMHD) specifically in mind, it can solve almost any 
 set of hyperbolic equations in conservation form:
 
-$$\frac{dU}{dt} + \frac{dF(U)}{dx^i} = S(U)$$
+dU / dt  +   dF(U) / dx^i   =  S(U)
 
-where, if there is a set of equations, $\{U,F,S\}$ are all state vectors and 
+where, if there is a set of equations, {U,F,S} are all state vectors and 
 represent the set of conserved variables, fluxes and sources, respectively. 
-There are also primitive variables, $P$, that are useful when solving hydrodynamic
-equations. Often, one only know how to calculate  $F$ given $P$, requiring the user
-to solve $P(U) = U^{-1}(P)$. $U(P)$ is a known algebraic set of equations in GRMHD, 
-but $P(U)$ is not so we are left to its calculation numerically. HARM performs most
+There are also primitive variables, P, that are useful when solving hydrodynamic
+equations. Often, one only know how to calculate  F  given P, requiring the user
+to solve P(U) = U^{-1}(P).   U(P) is a known algebraic set of equations in GRMHD, 
+but P(U) is not so we are left to its calculation numerically.  HARM performs most
 calculations with P and not with U, since one can derive all other MHD quantities
-from P efficiently (calculating $P(U)$ is relatively slow compared to $U(P)$). Hence, 
+from P efficiently (calculating P(U) is relatively slow compared to U(P)). Hence, 
 the fluxes and sources are implemented here as functions of P. 
 
 The following are the files that comprise HARM.  To the left are their names and 
@@ -68,40 +68,40 @@ on the right are short descriptions.
 
 HARM includes the following files:
 
-README		    :  This file, contains general documentation\
-lic.txt         :  Text file of copyright information\
-COPYING		    :  GNU Public License (GPL)\
-makefile	    :  The makefile \
-main.c		    :  Primary routine, calls major components of the code; \
-bounds.c	    :  Boundary conditions (problem dependent);\
-coord.c		    :  Specify/handle the user's coordinate system and metric;\
-decs.h		    :  Header file incl. glob. arrays/vars., macros, compile-time parameters;\
-defs.h		    :  Header file of definitions of those in decs.h\
-diag.c		    :  Primary handler of all data output;\
-dump.c		    :  Routine for writing grid functions at full precision over whole grid;\
-fixup.c		    :  Routines for handling unphysical/unstable values of P and U ;\
-image.c		    :  Routines for writing r8 or ppm raster images of grid functions;\
-image_interp.c  :  Supplemental program to interpolate an r8 file to x,y coordinates;\
-init.c		    :  Procedures for calculating initial data;      \
-interp.c	    :  Slope-limiting/shock-capturing interpolation for Riemann solution;\
-lu.c		    :  LU-decomp. and back-subst. routines for metric calculations  \
-metric.c	    :  Routines for doing tensor operations (inv., dot prod., lower/raising);  \
-phys.c		    :  For calculating U, F, S  from P;\
-ranc.c		    :  Random number generator;  \
-restart.c	    :  Checkpointing routines;  \
-step_ch.c	    :  Primary time-stepping routine and relatives;  \
-u2p_defs.h	    :  Inversion methods' main header file;  \
-u2p_util.c	    :  Misc. routines needed by inversion methods;\
-u2p_util.h	    :  Header for u2p_util.h;  \
-utoprim_1dfix1.c    :  P(U) assuming adiabatic or isothermal condition;\
-utoprim_1dvsq2fix1.c:  Alternate version of utoprim_1dfix1.c\
-utoprim_2d.c	    :  General GRMHD P(U) calculator with no assumptions;    \
-map.ppm		    :  PPM color map used to make images in PPM format;    \
+README		    :  This file, contains general documentation
+lic.txt             :  Text file of copyright information
+COPYING		    :  GNU Public License (GPL)
+makefile	    :  The makefile 
+main.c		    :  Primary routine, calls major components of the code;
+bounds.c	    :  Boundary conditions (problem dependent);
+coord.c		    :  Specify/handle the user's coordinate system and metric;
+decs.h		    :  Header file incl. glob. arrays/vars., macros, compile-time parameters;
+defs.h		    :  Header file of definitions of those in decs.h
+diag.c		    :  Primary handler of all data output;
+dump.c		    :  Routine for writing grid functions at full precision over whole grid;
+fixup.c		    :  Routines for handling unphysical/unstable values of P and U ;
+image.c		    :  Routines for writing r8 or ppm raster images of grid functions;
+image_interp.c      :  Supplemental program to interpolate an r8 file to x,y coordinates;
+init.c		    :  Procedures for calculating initial data;      
+interp.c	    :  Slope-limiting/shock-capturing interpolation for Riemann solution;
+lu.c		    :  LU-decomp. and back-subst. routines for metric calculations  
+metric.c	    :  Routines for doing tensor operations (inv., dot prod., lower/raising);  
+phys.c		    :  For calculating U, F, S  from P;
+ranc.c		    :  Random number generator;  
+restart.c	    :  Checkpointing routines;  
+step_ch.c	    :  Primary time-stepping routine and relatives;  
+u2p_defs.h	    :  Inversion methods' main header file;  
+u2p_util.c	    :  Misc. routines needed by inversion methods;
+u2p_util.h	    :  Header for u2p_util.h;  
+utoprim_1dfix1.c    :  P(U) assuming adiabatic or isothermal condition;
+utoprim_1dvsq2fix1.c:  Alternate version of utoprim_1dfix1.c
+utoprim_2d.c	    :  General GRMHD P(U) calculator with no assumptions;    
+map.ppm		    :  PPM color map used to make images in PPM format;    
 maps		    :  Directory containing other examples of color maps;    
 maps/blue-mono.ppm  :  Black-to-Blue map;    
 maps/bw.ppm	    :  Greyscale (monochrome) map;        
-maps/color.ppm	    :  256-color map;    \
-maps/green-mono.ppm :  Black-to-Green map; \
+maps/color.ppm	    :  256-color map;     
+maps/green-mono.ppm :  Black-to-Green map;        
 maps/red-mono.ppm   :  Black-to-Red map;    
 
 
