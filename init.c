@@ -75,7 +75,7 @@ void init()
 	double g_phiphi = 0. ;
 	double g_tphi = 0. ;
 	double g_tt = 0. ;
-	double B0 = .1 ;
+	double B0 = .01 ;
 	double rfac = 0. ;
 	double hfac = 0. ;
 	double Sigma = 0. ;
@@ -318,6 +318,7 @@ void init()
 	ZLOOP {
 		p[i][j][B1] *= norm ;
 		p[i][j][B2] *= norm ;
+		p[i][j][B3] *= norm ;
 
 		get_geometry(i,j,CENT,&geom) ;
 		bsq_ij = bsq_calc(p[i][j],&geom) ;
