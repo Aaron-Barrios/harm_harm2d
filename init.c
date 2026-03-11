@@ -102,7 +102,7 @@ void init()
         dt = 1.e-5 ;
 	R0 = 0.0 ;
         Rin = 0.98*(1. + sqrt(1. - a*a)) ;
-        Rout = 40. ;
+        Rout = 50. ; //r_g, radial coordinate of outer numerical boundary
 
         t = 0. ;
         hslope = 0.3 ;
@@ -245,7 +245,13 @@ void init()
 	bound_prim(p) ;
 
 	/* first find corner-centered vector potential */
-	ZSLOOP(0,N1,0,N2) A_KS[0][i][j] = 0.;A_KS[1][i][j] = 0.;A_KS[2][i][j] = 0.;A_KS[3][i][j] = 0.;
+	// ZSLOOP(0,N1,0,N2) A_KS[0][i][j] = 0.;A_KS[1][i][j] = 0.;A_KS[2][i][j] = 0.;A_KS[3][i][j] = 0.;
+	ZSLOOP(0,N1,0,N2) {
+	A_KS[0][i][j] = 0.;
+	A_KS[1][i][j] = 0.;
+	A_KS[2][i][j] = 0.;
+	A_KS[3][i][j] = 0.;
+	}
         ZSLOOP(0,N1,0,N2) {
 			/* vertical field version */
 			coord(i,j,CORN,X) ;
@@ -314,6 +320,7 @@ void init()
 	beta_act = (gam - 1.)*umax/(0.5*bsq_max) ;
 	fprintf(stderr,"initial beta: %g (should be %g)\n",beta_act,beta) ;
 	norm = sqrt(beta_act/beta) ;
+	B0_wald_eff = B0*norm;
 	bsq_max = 0. ;
 	ZLOOP {
 		p[i][j][B1] *= norm ;

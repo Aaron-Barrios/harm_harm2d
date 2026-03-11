@@ -211,6 +211,7 @@ extern double Katm[N1];
 /* physics parameters */
 extern double a ;
 extern double gam ;
+extern double B0_wald_eff ;
 
 /* numerical parameters */
 extern double Rin,Rout,hslope,R0 ;

@@ -85,6 +85,7 @@ double Katm[N1];
 /* physics parameters */
 double a ;
 double gam ;
+double B0_wald_eff = 0. ;
 
 /* numerical parameters */
 double Rin,Rout,hslope,R0 ;

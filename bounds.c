@@ -46,6 +46,51 @@
 #include "decs.h"
 
 /* bound array containing entire set of primitive variables */
+//Modified to have cubic dampening at inner/outer r boundaries
+//Specifically, will damp to the Wald solution
+
+static double relax_to_target(double edge, double target, double lambda)
+{
+        return lambda*edge + (1.0 - lambda)*target;
+}
+
+static void wald_Aks_corner(int i, int j, double B0eff, double *A_r, double *A_phi)
+{
+        double X[NDIM], r, th, Sigma, rfac;
+
+        coord(i, j, CORN, X);
+        bl_coord(X, &r, &th);
+
+        Sigma = r*r + a*a*cos(th)*cos(th);
+        rfac  = r - R0;
+
+        *A_r = B0eff*0.125*
+                (a*a*a*(1.0 - cos(4.0*th))
+                - 4.0*a*r*(r + 2.0)*cos(2.0*th)
+                + 4.0*a*(r - 6.0)*r)
+                /(a*a*cos(2.0*th) + a*a + 2.0*r*r) * rfac;
+
+        *A_phi = 0.5*B0eff*sin(th)*sin(th)*
+                (r*r + a*a - 2.0*a*a*r*(1.0 + cos(th)*cos(th))/Sigma);
+}
+
+static void wald_B_target_cell(int i, int j, double B0eff,
+                double *B1w, double *B2w, double *B3w)
+{
+        struct of_geom geom;
+        double Ar_ij, Ar_ijp1, Ar_dummy;
+        double Aphi_ij, Aphi_ijp1, Aphi_ip1j;
+
+        get_geometry(i, j, CENT, &geom);
+
+        wald_Aks_corner(i,   j,   B0eff, &Ar_ij,   &Aphi_ij);
+        wald_Aks_corner(i,   j+1, B0eff, &Ar_ijp1, &Aphi_ijp1);
+        wald_Aks_corner(i+1, j,   B0eff, &Ar_dummy,&Aphi_ip1j);
+
+        *B1w =  (Aphi_ijp1 - Aphi_ij) / (dx[2]*geom.g);
+        *B2w = -(Aphi_ip1j - Aphi_ij) / (dx[1]*geom.g);
+        *B3w = -(Ar_ijp1   - Ar_ij)   / (dx[2]*geom.g);
+}
 
 void bound_prim( double prim[][N2+4][NPR] )
 {
@@ -53,17 +98,57 @@ void bound_prim( double prim[][N2+4][NPR] )
 	void inflow_check(double *pr, int ii, int jj, int type );
         struct of_geom geom ;
 
+        double a_fac = 0.5; //Dampening coefficient, range = 0 to 1
+        int n = 2; //Number of ghost cells
+        double damp_coef1 = (1. - a_fac*1./(n*n*n));
+        double damp_coef2 = (1. - a_fac*8./(n*n*n));
+        //Gonna dampen the B-field, and nothing else
+        //Dampening goes like 1 - a_fac(x/n)^3
+
+        double B0eff = B0_wald_eff;   /* preferred: exported from init */
+        double B1w, B2w, B3w;
+
         /* inner r boundary condition: u, gdet extrapolation */
         for(j=0;j<N2;j++) {
 #if( RESCALE )
 		get_geometry(0,j,CENT,&geom) ;
 		rescale(prim[0][j],FORWARD, 1, 0,j,CENT,&geom) ;
 #endif
-                PLOOP prim[-1][j][k] = prim[0][j][k] ;
-                PLOOP prim[-2][j][k] = prim[0][j][k] ;
-                pflag[-1][j] = pflag[0][j] ;
-                pflag[-2][j] = pflag[0][j] ;
 
+                //Dampening to Wald solution
+                wald_B_target_cell(0, j, B0eff, &B1w, &B2w, &B3w);
+                PLOOP {
+                        if (k == B1) {
+                                prim[-1][j][B1] = relax_to_target(prim[0][j][B1], B1w, damp_coef1);
+                                prim[-2][j][B1] = relax_to_target(prim[0][j][B1], B1w, damp_coef2);
+                        } else if (k == B2) {
+                                prim[-1][j][B2] = relax_to_target(prim[0][j][B2], B2w, damp_coef1);
+                                prim[-2][j][B2] = relax_to_target(prim[0][j][B2], B2w, damp_coef2);
+                        } else if (k == B3) {
+                                prim[-1][j][B3] = relax_to_target(prim[0][j][B3], B3w, damp_coef1);
+                                prim[-2][j][B3] = relax_to_target(prim[0][j][B3], B3w, damp_coef2);
+                        } else {
+                                prim[-1][j][k] = prim[0][j][k];
+                                prim[-2][j][k] = prim[0][j][k];
+                        }
+                }
+
+                //Just dampening to zero
+                // PLOOP {
+                // if (k == B1 || k == B2 || k == B3) {
+                // prim[-1][j][k] = damp_coef1 * prim[0][j][k];
+                // prim[-2][j][k] = damp_coef2 * prim[0][j][k];
+                // } else {
+                // prim[-1][j][k] = prim[0][j][k];
+                // prim[-2][j][k] = prim[0][j][k];
+                // }
+                // }
+                
+                pflag[-1][j] = pflag[0][j];
+                pflag[-2][j] = pflag[0][j];
+
+
+                
 #if( RESCALE )
 		get_geometry(0,j,CENT,&geom) ;
 		rescale(prim[0][j],REVERSE, 1, 0,j,CENT,&geom) ;
@@ -82,10 +167,39 @@ void bound_prim( double prim[][N2+4][NPR] )
 		rescale(prim[N1-1][j],FORWARD, 1, N1-1,j,CENT,&geom) ;
 #endif
 
-		PLOOP prim[N1  ][j][k] = prim[N1-1][j][k] ;
-		PLOOP prim[N1+1][j][k] = prim[N1-1][j][k] ;
-		pflag[N1  ][j] = pflag[N1-1][j] ;
-		pflag[N1+1][j] = pflag[N1-1][j] ;
+                //Dampening to Wald solution
+                wald_B_target_cell(N1-1, j, B0eff, &B1w, &B2w, &B3w);
+                PLOOP {
+                        if (k == B1) {
+                                prim[N1  ][j][B1] = relax_to_target(prim[N1-1][j][B1], B1w, damp_coef1);
+                                prim[N1+1][j][B1] = relax_to_target(prim[N1-1][j][B1], B1w, damp_coef2);
+                        } else if (k == B2) {
+                                prim[N1  ][j][B2] = relax_to_target(prim[N1-1][j][B2], B2w, damp_coef1);
+                                prim[N1+1][j][B2] = relax_to_target(prim[N1-1][j][B2], B2w, damp_coef2);
+                        } else if (k == B3) {
+                                prim[N1  ][j][B3] = relax_to_target(prim[N1-1][j][B3], B3w, damp_coef1);
+                                prim[N1+1][j][B3] = relax_to_target(prim[N1-1][j][B3], B3w, damp_coef2);
+                        } else {
+                                prim[N1  ][j][k] = prim[N1-1][j][k];
+                                prim[N1+1][j][k] = prim[N1-1][j][k];
+                        }
+                }
+
+                //Just dampening to zero
+                // PLOOP {
+                // if (k == B1 || k == B2 || k == B3) {
+                // prim[N1  ][j][k] = damp_coef1 * prim[N1-1][j][k];
+                // prim[N1+1][j][k] = damp_coef2 * prim[N1-1][j][k];
+                // } else {
+                // prim[N1 ][j][k] = prim[N1-1][j][k];
+                // prim[N1+1][j][k] = prim[N1-1][j][k];
+                // }
+                // }
+                pflag[N1 ][j] = pflag[N1-1][j];
+                pflag[N1+1][j] = pflag[N1-1][j];
+
+                //Make sure you put original here and above
+
 
 #if( RESCALE )
 		get_geometry(N1-1,j,CENT,&geom) ;

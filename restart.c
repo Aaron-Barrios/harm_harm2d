@@ -103,6 +103,7 @@ void restart_write()
   fprintf(fp, FMT_DBL_OUT, Rout     );
   fprintf(fp, FMT_DBL_OUT, hslope   );
   fprintf(fp, FMT_DBL_OUT, R0       );
+  fprintf(fp, FMT_DBL_OUT, B0_wald_eff);
 
   fprintf(fp,"\n");
 
@@ -257,6 +258,7 @@ void restart_read(FILE *fp)
   fscanf(fp, "%lf", &Rout     );
   fscanf(fp, "%lf", &hslope   );
   fscanf(fp, "%lf", &R0       );
+  fscanf(fp, "%lf", &B0_wald_eff);
 
   /*************************************************************
 	  READ the body of the restart file: 
